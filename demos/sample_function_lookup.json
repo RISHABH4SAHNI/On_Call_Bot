@@ -1,0 +1,80 @@
+{
+  "export_info": {
+    "created_at": "2024-01-15T16:30:00.000Z",
+    "version": "1.0",
+    "total_functions": 4
+  },
+  "summary": {
+    "total_functions": 4,
+    "async_functions": 2,
+    "functions_with_error_handling": 3,
+    "unique_modules": 3,
+    "unique_repositories": 1
+  },
+  "functions": [
+    {
+      "function_name": "authenticate_user",
+      "lookup_id": "func-auth-001",
+      "nested_call_ids": ["func-jwt-002", "func-db-003"],
+      "file_path": "/src/auth/authentication.py",
+      "repository_name": "webapp-backend",
+      "module_name": "src.auth.authentication",
+      "start_line": 15,
+      "end_line": 45,
+      "is_async": false,
+      "class_context": "AuthManager",
+      "calls": ["validate_token", "get_user_by_id", "log_authentication"],
+      "decorators": ["@require_auth", "@rate_limit"],
+      "has_error_handling": true,
+      "error_types": ["TokenExpiredError", "InvalidTokenError", "UserNotFoundError"]
+    },
+    {
+      "function_name": "validate_token",
+      "lookup_id": "func-jwt-002",
+      "nested_call_ids": [],
+      "file_path": "/src/auth/jwt_utils.py",
+      "repository_name": "webapp-backend",
+      "module_name": "src.auth.jwt_utils",
+      "start_line": 8,
+      "end_line": 28,
+      "is_async": false,
+      "class_context": null,
+      "calls": ["jwt.decode", "datetime.now", "check_signature"],
+      "decorators": [],
+      "has_error_handling": true,
+      "error_types": ["jwt.InvalidTokenError", "jwt.ExpiredSignatureError"]
+    },
+    {
+      "function_name": "process_bulk_insert",
+      "lookup_id": "func-db-003",
+      "nested_call_ids": ["func-db-004"],
+      "file_path": "/src/database/operations.py",
+      "repository_name": "webapp-backend", 
+      "module_name": "src.database.operations",
+      "start_line": 52,
+      "end_line": 89,
+      "is_async": true,
+      "class_context": "DatabaseManager",
+      "calls": ["create_connection", "begin_transaction", "execute_batch", "commit"],
+      "decorators": ["@async_timeout(300)", "@retry(max_attempts=3)"],
+      "has_error_handling": true,
+      "error_types": ["DatabaseConnectionError", "TransactionError", "TimeoutError"]
+    },
+    {
+      "function_name": "create_connection",
+      "lookup_id": "func-db-004",
+      "nested_call_ids": [],
+      "file_path": "/src/database/connection.py",
+      "repository_name": "webapp-backend",
+      "module_name": "src.database.connection",
+      "start_line": 12,
+      "end_line": 35,
+      "is_async": true,
+      "class_context": "ConnectionPool",
+      "calls": ["asyncpg.connect", "setup_connection", "register_types"],
+      "decorators": ["@connection_timeout(30)"],
+      "has_error_handling": false,
+      "error_types": []
+    }
+  ]
+}

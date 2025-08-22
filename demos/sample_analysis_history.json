@@ -1,0 +1,93 @@
+{
+  "created_at": "2024-01-15T10:30:00.000Z",
+  "version": "1.0",
+  "total_analyses": 5,
+  "last_updated": "2024-01-15T15:45:00.000Z",
+  "analyses": [
+    {
+      "id": 1,
+      "timestamp": "2024-01-15T10:35:00.000Z",
+      "query": "Authentication function is throwing JWT token validation errors",
+      "enhanced_query": "Authentication function JWT token validation errors: analyze token parsing, signature verification, expiration checking, and error handling in auth middleware",
+      "analysis_result": "The issue is likely in the JWT validation process. The authenticate_user function in auth.py shows several potential problems:\n\n1. **Token Parsing**: The function doesn't handle malformed tokens properly\n2. **Signature Verification**: Missing proper secret key validation\n3. **Expiration Check**: No timezone handling for token expiration\n\nRecommended fixes:\n- Add try-catch blocks around jwt.decode()\n- Validate token format before parsing\n- Use UTC timestamps for expiration checks\n- Implement proper error logging",
+      "confidence_score": 0.87,
+      "functions_analyzed": 3,
+      "services_used": {
+        "embedding": "openai",
+        "llm": "openai"
+      },
+      "context": {
+        "repo_name": "webapp-backend",
+        "priority": "high"
+      }
+    },
+    {
+      "id": 2,
+      "timestamp": "2024-01-15T11:20:00.000Z",
+      "query": "Database connection is timing out during bulk inserts",
+      "enhanced_query": "Database connection timeout bulk insert operations: analyze connection pooling, transaction management, batch size optimization, and timeout configurations",
+      "analysis_result": "The bulk insert timeout is caused by inefficient batching and connection management:\n\n1. **Batch Size**: Current batch size of 10000 is too large\n2. **Connection Pooling**: No connection reuse between batches\n3. **Transaction Management**: Each insert creates a new transaction\n\nSolutions:\n- Reduce batch size to 1000-2000 records\n- Implement connection pooling with SQLAlchemy\n- Use single transaction for entire batch\n- Add connection timeout handling",
+      "confidence_score": 0.92,
+      "functions_analyzed": 4,
+      "services_used": {
+        "embedding": "openai",
+        "llm": "openai"
+      },
+      "context": {
+        "repo_name": "data-processor",
+        "tech_stack": ["python", "postgresql"]
+      }
+    },
+    {
+      "id": 3,
+      "timestamp": "2024-01-15T13:15:00.000Z",
+      "query": "Memory leak in async task processing",
+      "enhanced_query": "Memory leak async task processing: analyze task lifecycle, garbage collection, event loop management, and resource cleanup in asyncio operations",
+      "analysis_result": "Memory leak identified in async task management:\n\n1. **Unclosed Tasks**: AsyncIO tasks not properly awaited\n2. **Resource Cleanup**: Database connections not closed in finally blocks\n3. **Event Loop**: Creating new event loops without cleanup\n\nFixes required:\n- Use asyncio.create_task() and await properly\n- Implement context managers for resources\n- Add proper exception handling\n- Use asyncio.gather() for concurrent tasks",
+      "confidence_score": 0.78,
+      "functions_analyzed": 6,
+      "services_used": {
+        "embedding": "openai",
+        "llm": "perplexity"
+      },
+      "context": {
+        "repo_name": "async-worker",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": 4,
+      "timestamp": "2024-01-15T14:30:00.000Z",
+      "query": "API response times are very slow",
+      "enhanced_query": "API response times performance optimization: analyze request processing, database queries, caching strategies, and bottleneck identification",
+      "analysis_result": "Performance bottleneck analysis reveals multiple issues:\n\n1. **N+1 Query Problem**: Multiple database calls in loops\n2. **Missing Indexes**: Database queries without proper indexing\n3. **No Caching**: Repeated expensive operations\n4. **Synchronous Operations**: Blocking I/O operations\n\nOptimizations:\n- Implement eager loading with joins\n- Add database indexes on frequently queried columns\n- Implement Redis caching for expensive operations\n- Use async/await for I/O operations",
+      "confidence_score": 0.94,
+      "functions_analyzed": 8,
+      "services_used": {
+        "embedding": "openai",
+        "llm": "openai"
+      },
+      "context": {
+        "repo_name": "api-server",
+        "tech_stack": ["python", "fastapi", "postgresql"]
+      }
+    },
+    {
+      "id": 5,
+      "timestamp": "2024-01-15T15:45:00.000Z",
+      "query": "File upload feature is failing with large files",
+      "enhanced_query": "File upload large files failure: analyze streaming upload, memory management, chunked processing, and timeout handling for large file operations",
+      "analysis_result": "Large file upload issues stem from memory and timeout constraints:\n\n1. **Memory Loading**: Loading entire file into memory\n2. **No Streaming**: Not using chunked upload processing\n3. **Timeout Issues**: Default timeout too short for large files\n4. **Error Handling**: No progress tracking or resume capability\n\nImplementation needed:\n- Use streaming upload with chunks\n- Implement progress tracking\n- Add resumable upload capability\n- Increase timeout settings\n- Add file size validation",
+      "confidence_score": 0.89,
+      "functions_analyzed": 5,
+      "services_used": {
+        "embedding": "ollama",
+        "llm": "ollama"
+      },
+      "context": {
+        "repo_name": "file-service",
+        "priority": "medium"
+      }
+    }
+  ]
+}
