@@ -1,4 +1,4 @@
-# Code Analysis Bot - Restructured
+# Code Analysis Bot 
 
 A clean, modular AI-powered code analysis system that processes repositories, creates function embeddings, and provides intelligent issue analysis with confidence scoring.
 
