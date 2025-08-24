@@ -104,6 +104,16 @@ class FunctionExtractor:
         code = ast.get_source_segment(self.source_code, node) or ""
         line_numbers = list(range(start_line, end_line + 1))
         
+        file_name = self.file_path.split('/')[-1] if self.file_path else ""
+        
+        code_with_line_numbers = ""
+        if code:
+            lines = code.split('\n')
+            numbered_lines = []
+            for i, line in enumerate(lines):
+                numbered_lines.append(f"{start_line + i:4d}: {line}")
+            code_with_line_numbers = '\n'.join(numbered_lines)
+        
         return FunctionMetadata(
             name=node.name,
             lookup_id=lookup_id,
@@ -120,7 +130,9 @@ class FunctionExtractor:
             imports=self.imports.copy(),
             decorators=decorators,
             error_handling=error_handling,
-            line_numbers=line_numbers
+            line_numbers=line_numbers,
+            file_name=file_name,
+            code_with_line_numbers=code_with_line_numbers
         )
 
     def _extract_calls(self, node: ast.FunctionDef) -> List[str]:
