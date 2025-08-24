@@ -1,45 +1,108 @@
-from factories.embedding_factory import EmbeddingFactory
-from factories.llm_factory import LLMFactory
+from services.embedding_service import OpenAIEmbeddingService, OllamaEmbeddingService, PerplexityEmbeddingService
 from services.vector_search_service import VectorSearchService
-from core.repository_processor import RepositoryProcessor
+from services.call_graph_search_service import CallGraphSearchService
+from services.query_enhancement_service import OpenAIQueryEnhancementService, PerplexityQueryEnhancementService, OllamaQueryEnhancementService
+from services.analysis_service import OpenAIAnalysisService, PerplexityAnalysisService, OllamaAnalysisService
+from core.call_graph_processor import CallGraphProcessor
 from core.function_lookup import FunctionLookupTable
+from core.repository_processor import RepositoryProcessor
+from models.function_model import AnalysisApproach
 
 class ServiceFactory:
     def __init__(self):
-        self._embedding_service = None
-        self._search_service = None
-        self._analysis_service = None
-        self._query_enhancer = None
-        self._repo_processor = None
-        self._lookup_table = None
-    
+        pass
+
     def get_embedding_service(self, service_type: str = "openai"):
-        if not self._embedding_service:
-            self._embedding_service = EmbeddingFactory.create_service(service_type)
-        return self._embedding_service
-    
+        if service_type == "openai":
+            return OpenAIEmbeddingService()
+        elif service_type == "ollama":
+            return OllamaEmbeddingService()
+        elif service_type == "perplexity":
+            return PerplexityEmbeddingService()
+        else:
+            raise ValueError(f"Unsupported embedding service: {service_type}")
+
     def get_search_service(self, embedding_service_type: str = "openai"):
-        if not self._search_service:
-            embedding_service = self.get_embedding_service(embedding_service_type)
-            self._search_service = VectorSearchService(embedding_service)
-        return self._search_service
+        embedding_service = self.get_embedding_service(embedding_service_type)
+        return VectorSearchService(embedding_service)
     
-    def get_analysis_service(self, service_type: str = "openai"):
-        if not self._analysis_service:
-            self._analysis_service = LLMFactory.create_analysis_service(service_type)
-        return self._analysis_service
+    def get_call_graph_search_service(self, embedding_service_type: str = "openai"):
+        embedding_service = self.get_embedding_service(embedding_service_type)
+        return CallGraphSearchService(embedding_service)
+    
+    def get_call_graph_processor(self):
+        return CallGraphProcessor()
+    
+    def get_combined_search_service(self, embedding_service_type: str = "openai", approach: str = "function_lookup_table"):
+        if approach == "call_graph":
+            return self.get_call_graph_search_service(embedding_service_type)
+        else:
+            return self.get_search_service(embedding_service_type)
     
     def get_query_enhancer(self, service_type: str = "openai"):
-        if not self._query_enhancer:
-            self._query_enhancer = LLMFactory.create_query_enhancer(service_type)
-        return self._query_enhancer
-    
+        if service_type == "openai":
+            return OpenAIQueryEnhancementService()
+        elif service_type == "perplexity":
+            return PerplexityQueryEnhancementService()
+        elif service_type == "ollama":
+            return OllamaQueryEnhancementService()
+        else:
+            raise ValueError(f"Unsupported query enhancement service: {service_type}")
+
+    def get_analysis_service(self, service_type: str = "openai"):
+        if service_type == "openai":
+            return OpenAIAnalysisService()
+        elif service_type == "perplexity":
+            return PerplexityAnalysisService()
+        elif service_type == "ollama":
+            return OllamaAnalysisService()
+        else:
+            raise ValueError(f"Unsupported analysis service: {service_type}")
+
     def get_repository_processor(self):
-        if not self._repo_processor:
-            self._repo_processor = RepositoryProcessor()
-        return self._repo_processor
-    
+        return RepositoryProcessor()
+
     def get_lookup_table(self):
-        if not self._lookup_table:
-            self._lookup_table = FunctionLookupTable()
-        return self._lookup_table
+        return FunctionLookupTable()
+    
+    def get_services_for_approach(self, approach: str, embedding_service_type: str = "openai", llm_service_type: str = "openai"):
+        """Get all required services for a specific analysis approach"""
+        services = {
+            'embedding_service': self.get_embedding_service(embedding_service_type),
+            'query_enhancer': self.get_query_enhancer(llm_service_type),
+            'analysis_service': self.get_analysis_service(llm_service_type),
+            'repository_processor': self.get_repository_processor(),
+        }
+        
+        if approach == "call_graph":
+            services.update({
+                'search_service': self.get_call_graph_search_service(embedding_service_type),
+                'call_graph_processor': self.get_call_graph_processor()
+            })
+        else:
+            services.update({
+                'search_service': self.get_search_service(embedding_service_type),
+                'lookup_table': self.get_lookup_table()
+            })
+        
+        return services
+    
+    def validate_approach(self, approach: str) -> bool:
+        """Validate if the analysis approach is supported"""
+        from config.settings import SUPPORTED_APPROACHES
+        return approach in SUPPORTED_APPROACHES
+    
+    def get_supported_approaches(self):
+        """Get list of supported analysis approaches"""
+        return [
+            {
+                'key': 'function_lookup_table',
+                'name': 'Function Lookup Table',
+                'description': 'Traditional approach using function metadata and nested calls'
+            },
+            {
+                'key': 'call_graph',
+                'name': 'Call Graph',
+                'description': 'Advanced approach using function call graph for dependency analysis'
+            }
+        ]
