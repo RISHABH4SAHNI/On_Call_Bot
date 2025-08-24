@@ -1,151 +1,289 @@
-# Embedding Generation and User Issue Analysis Flow
+# Repository Processing and Analysis Flow
 
-## 1. Embedding Generation Process
+## Overview
+
+This document describes the comprehensive flow for repository processing and user issue analysis, supporting multiple analysis approaches including Call Graph Analysis, Function Lookup Tables, Vector Search, and Hybrid approaches.
+
+## 1. Repository Processing Flow (Multi-Approach)
 
 ```mermaid
 flowchart TD
     A[Start: Process Repository] --> B[Extract Repo Info from URL]
-    B --> C[Read pyproject.toml for Dependencies]
-    C --> D[List All Files in Repository]
-    D --> E{File is Python?}
-    E -->|No| F[Skip File]
-    E -->|Yes| G{Is Test File?}
-    G -->|Yes| H[Skip Test File]
-    G -->|No| I[Fetch File Content]
-    I --> J[Parse Functions using AST]
-    J --> K{Found Functions?}
-    K -->|No| L[Continue to Next File]
-    K -->|Yes| M[For Each Function]
-    M --> N[Filter Imports: Only Project Dependencies]
-    N --> O[Generate OpenAI Embedding]
-    O --> P{Embedding Success?}
-    P -->|No| Q[Log Error]
-    P -->|Yes| R[Upload to OpenSearch]
-    R --> S{Upload Success?}
-    S -->|No| T[Log Upload Error]
-    S -->|Yes| U[Increment Counter]
-    U --> V{More Functions?}
-    V -->|Yes| M
-    V -->|No| W{More Files?}
-    W -->|Yes| L
-    W -->|No| X[Print Summary]
-    X --> Y[End: Embeddings Complete]
+    B --> C[Select Analysis Approach]
+    C --> D[Read Dependencies & Config]
+    D --> E[List All Files in Repository]
+    E --> F{File is Python?}
+    F -->|No| G[Skip File]
+    F -->|Yes| H{Is Test File?}
+    H -->|Yes| I[Skip Test File]
+    H -->|No| J[Parse Functions using AST]
+    J --> K[Extract Function Metadata]
+    K --> L{Analysis Approach}
     
-    F --> W
-    H --> W
-    L --> W
-    Q --> V
-    T --> V
+    L -->|Function Lookup Table| M[Build Lookup Table]
+    L -->|Call Graph| N[Build Call Graph]
+    L -->|Vector Search| O[Generate Embeddings]
+    L -->|Hybrid| P[Execute All Approaches]
+    
+    M --> Q[Create Searchable Index]
+    N --> R[Analyze Dependencies & Store]
+    O --> S[Create & Upload Embeddings]
+    P --> T[Multi-Modal Processing]
+    
+    Q --> U[Generate Summary Statistics]
+    R --> V[Generate Graph Statistics]
+    S --> W[Generate Embedding Statistics]
+    T --> X[Generate Comprehensive Statistics]
+    
+    U --> Y[End: Repository Processed]
+    V --> Y
+    W --> Y
+    X --> Y
+    
+    G --> E
+    I --> E
 ```
 
-## 2. User Issue Analysis Flow
+## 2. Function Metadata Extraction (Enhanced)
+
+```mermaid
+flowchart TD
+    A[Python File] --> B[AST Parsing]
+    B --> C[Extract Functions]
+    C --> D[For Each Function]
+    D --> E[Basic Metadata]
+    E --> F[Call Analysis]
+    F --> G[Import Analysis]
+    G --> H[Decorator Analysis]
+    H --> I[Error Handling Analysis]
+    I --> J[Create Function Metadata]
+    J --> K{More Functions?}
+    K -->|Yes| D
+    K -->|No| L[Function List Complete]
+    
+    E1[Name, Line Numbers] --> E
+    E2[Class Context] --> E
+    E3[Async Status] --> E
+    
+    F1[Function Calls] --> F
+    F2[Method Calls] --> F
+    
+    G1[Project Imports] --> G
+    G2[Standard Library] --> G
+    
+    H1[Decorator List] --> H
+    H2[Decorator Args] --> H
+    
+    I1[Try-Catch Blocks] --> I
+    I2[Exception Types] --> I
+```
+
+## 3. Call Graph Construction Process
+
+```mermaid
+flowchart TD
+    A[Function Metadata List] --> B[Initialize Call Graph]
+    B --> C[Add All Functions as Nodes]
+    C --> D[Build Function Name Mapping]
+    D --> E[For Each Function]
+    E --> F[Analyze Function Calls]
+    F --> G[Filter Builtin Functions]
+    G --> H[Create Call Edges]
+    H --> I{More Functions?}
+    I -->|Yes| E
+    I -->|No| J[Identify Root Nodes]
+    J --> K[Identify Leaf Nodes]
+    K --> L[Calculate Node Depths]
+    L --> M[Generate Graph Statistics]
+    M --> N[Call Graph Complete]
+```
+
+## 4. Enhanced Embedding Generation
+
+```mermaid
+flowchart TD
+    A[Function Metadata] --> B{Approach Type}
+    B -->|Vector Search| C[Standard Embedding]
+    B -->|Call Graph| D[Graph-Enhanced Embedding]
+    B -->|Hybrid| E[Multi-Context Embedding]
+    
+    C --> F[Function Code + Metadata]
+    D --> G[Function + Graph Context]
+    E --> H[Function + Graph + Lookup Context]
+    
+    F --> I[Generate Embedding]
+    G --> I
+    H --> I
+    
+    I --> J{Embedding Success?}
+    J -->|No| K[Log Error & Continue]
+    J -->|Yes| L[Store in OpenSearch]
+    L --> M{Storage Success?}
+    M -->|No| N[Log Storage Error]
+    M -->|Yes| O[Update Counter]
+    
+    K --> P{More Functions?}
+    N --> P
+    O --> P
+    P -->|Yes| A
+    P -->|No| Q[Embedding Process Complete]
+```
+
+## 5. Multi-Approach User Issue Analysis
 
 ```mermaid
 flowchart TD
     A[User Input: Issue/Query] --> B[Context Collection]
     B --> C[Auto-detect Environment]
     C --> D[Auto-detect Git Context]
-    D --> E[Auto-detect Recent Activity]
-    E --> F[Optional: Manual Context Input]
-    F --> G[Combine Context + Query]
-    G --> H[Query Enhancement with LLM]
-    H --> I[Enhanced Query Generated]
-    I --> J[Vector Search in OpenSearch]
-    J --> K{Found Relevant Functions?}
-    K -->|No| L[Return Error: No Functions Found]
-    K -->|Yes| M[Get Top 5 Results]
-    M --> N[Prepare Context for Analysis]
-    N --> O[LLM Analysis: GPT or Ollama]
-    O --> P[Generate Technical Analysis]
-    P --> Q[Return Analysis Results]
-    Q --> R[End: Analysis Complete]
+    D --> E[Query Enhancement with LLM]
+    E --> F[Approach Selection/Configuration]
+    F --> G{Selected Approach}
     
-    L --> R
+    G -->|Function Lookup Table| H[Metadata Search]
+    G -->|Call Graph| I[Graph-Based Search]
+    G -->|Vector Search| J[Embedding Similarity]
+    G -->|Hybrid| K[Multi-Modal Search]
+    
+    H --> L[Fast Lookup Results]
+    I --> M[Dependency Context Results]
+    J --> N[Semantic Similarity Results]
+    K --> O[Fused Results]
+    
+    L --> P[Confidence Assessment]
+    M --> P
+    N --> P
+    O --> P
+    
+    P --> Q{Confidence > Threshold?}
+    Q -->|No| R[Iterative Refinement]
+    Q -->|Yes| S[Context Integration]
+    
+    R --> T[Enhanced Search Strategy]
+    T --> G
+    
+    S --> U[LLM Analysis with Context]
+    U --> V[Generate Technical Analysis]
+    V --> W[History Tracking]
+    W --> X[Return Analysis Results]
+    X --> Y[End: Analysis Complete]
 ```
 
-## 3. Detailed Process Steps
+## 6. Detailed Process Steps by Approach
 
-### Embedding Generation Steps:
-1. **Repository Processing**
-   - Extract workspace and repo slug from Bitbucket URL
-   - Read pyproject.toml to get project dependencies
-   - List all files in repository recursively
+### Function Lookup Table Approach:
+1. **Index Creation**
+   - Build searchable metadata index
+   - Support filtering by multiple attributes
+   - Create export capabilities (CSV/JSON)
 
-2. **File Filtering**
-   - Skip non-Python files (.py extension only)
-   - Skip test files (patterns: test_, _test, tests/, spec_, etc.)
-   - Track skipped files for summary
+2. **Fast Search**
+   - Direct metadata matching
+   - Pattern-based filtering
+   - Instant results for exact matches
 
-3. **Function Extraction**
-   - Parse each Python file using AST
-   - Extract function definitions with metadata
-   - Get function code, line numbers, calls, imports, etc.
+### Call Graph Approach:
+1. **Graph Construction**
+   - Build complete dependency graph
+   - Calculate node depths and relationships
+   - Identify critical paths and components
 
-4. **Import Filtering**
-   - Filter imports to only include project dependencies from pyproject.toml
-   - Exclude standard library and external dependencies
-   - Keep only relevant project imports
+2. **Context-Aware Search**
+   - Include dependency context in results
+   - Provide call path analysis
+   - Enable impact assessment
 
-5. **Embedding Generation**
-   - Create OpenAI embedding for each function
-   - Include all metadata in embedding context
-   - Handle API errors gracefully
+### Vector Search Approach:
+1. **Embedding Generation**
+   - Create semantic embeddings
+   - Store in optimized OpenSearch index
+   - Support k-NN similarity search
 
-6. **OpenSearch Upload**
-   - Upload embedding with function metadata
-   - Store code, calls, imports, line numbers, etc.
-   - Handle upload errors gracefully
+2. **Semantic Search**
+   - Find conceptually similar functions
+   - Cross-language pattern recognition
+   - Context-aware similarity scoring
 
-### User Issue Analysis Steps:
-1. **Context Collection**
-   - Auto-detect OS, Git branch, repo name
-   - Auto-detect recent activity and memory usage
-   - Optional manual context input (role, priority, etc.)
+### Hybrid Approach:
+1. **Parallel Execution**
+   - Run multiple approaches simultaneously
+   - Cross-validate results
+   - Combine strengths of each method
 
-2. **Query Enhancement**
-   - Use LLM to enhance user query with technical context
-   - Preserve original terms and intent
-   - Add architectural and pattern context
+2. **Result Fusion**
+   - Intelligent result merging
+   - Confidence-based weighting
+   - Comprehensive analysis coverage
 
-3. **Vector Search**
-   - Search OpenSearch using enhanced query
-   - Use k-NN to find most similar functions
-   - Return top 5 relevant results
+## 7. Enhanced Context Collection
 
-4. **LLM Analysis**
-   - Prepare context with found functions
-   - Use GPT or Ollama for technical analysis
-   - Generate detailed issue analysis with line numbers
-
-## 4. Key Data Flows
-
-### Embedding Data:
+### Automatic Context Detection:
 ```
-Function Code + Metadata → OpenAI Embedding → OpenSearch Document
-```
+Environment Context:
+- OS, Python version, available memory
+- Git branch, recent commits, repository info
+- Error logs, performance metrics
+- Technology stack, dependencies
 
-### Query Data:
-```
-User Query → Context Collection → Enhanced Query → Vector Search → LLM Analysis
+Analysis Context:
+- Query complexity assessment
+- Historical similar queries
+- Approach effectiveness patterns
+- User preferences and feedback
 ```
 
-### Context Data:
-```
-Environment + Git + Activity + Manual Input → Enhanced Query → Better Search Results
-```
+## 8. Confidence Scoring and Quality Assessment
 
-## 5. Error Handling Points
+### Multi-Dimensional Confidence:
+- **Search Relevance**: How well results match query
+- **Context Completeness**: Adequacy of context information
+- **Cross-Approach Agreement**: Consistency across methods
+- **Historical Performance**: Success rate for similar queries
 
-- **File Access Errors**: Skip files that can't be read
-- **Parsing Errors**: Skip files that can't be parsed
-- **Embedding Errors**: Log and continue with next function
-- **Upload Errors**: Log and continue with next function
-- **Search Errors**: Return appropriate error messages
-- **LLM Errors**: Fall back to original query or return error
+### Quality Metrics:
+- **Coverage**: Percentage of relevant functions found
+- **Precision**: Accuracy of returned results
+- **Completeness**: Depth of analysis provided
+- **Actionability**: Usefulness of recommendations
 
-## 6. Performance Considerations
+## 9. Advanced Error Handling
 
-- **Batch Processing**: Process files one by one
-- **Error Recovery**: Continue processing even if some items fail
-- **Progress Tracking**: Show progress for large repositories
-- **Memory Management**: Process functions individually to avoid memory issues 
+### Service-Level Errors:
+- **LLM Service Failures**: Automatic fallback to alternative services
+- **OpenSearch Unavailable**: Graceful degradation to in-memory search
+- **Embedding Generation Errors**: Continue with available functions
+- **Graph Construction Issues**: Partial graph with warnings
+
+### Analysis-Level Errors:
+- **Low Confidence Results**: Automatic refinement strategies
+- **No Results Found**: Expanded search scope and alternative approaches
+- **Context Overload**: Intelligent context truncation and prioritization
+- **Inconsistent Results**: Cross-validation and conflict resolution
+
+## 10. Performance Optimization Strategies
+
+### Caching Layers:
+- **Query Result Caching**: Cache frequent query results
+- **Embedding Caching**: Reuse generated embeddings
+- **Graph Structure Caching**: Persist call graph between sessions
+- **Context Caching**: Store processed context information
+
+### Parallel Processing:
+- **Multi-Approach Execution**: Run approaches in parallel
+- **Batch Processing**: Process multiple functions simultaneously
+- **Async Operations**: Non-blocking I/O for external services
+- **Resource Pooling**: Efficient resource utilization
+
+## 11. Monitoring and Analytics
+
+### Real-Time Metrics:
+- **Processing Speed**: Repository analysis time
+- **Search Latency**: Query response time
+- **Success Rates**: Analysis effectiveness
+- **Resource Usage**: Memory and CPU utilization
+
+### Historical Analytics:
+- **Approach Effectiveness**: Success rates by approach
+- **Query Patterns**: Common query types and trends
+- **User Satisfaction**: Feedback and usage patterns
+- **System Performance**: Long-term performance trends
