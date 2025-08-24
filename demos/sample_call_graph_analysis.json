@@ -1,0 +1,123 @@
+{
+  "created_at": "2024-01-20T14:30:00.000Z",
+  "version": "1.1",
+  "analysis_approach": "call_graph",
+  "total_analyses": 3,
+  "last_updated": "2024-01-20T16:45:00.000Z",
+  "graph_statistics": {
+    "total_nodes": 45,
+    "root_nodes": 8,
+    "leaf_nodes": 12,
+    "max_depth": 4,
+    "total_edges": 73
+  },
+  "analyses": [
+    {
+      "id": 1,
+      "timestamp": "2024-01-20T14:35:00.000Z",
+      "query": "User authentication is failing with JWT validation errors",
+      "enhanced_query": "User authentication JWT validation errors: analyze token validation chain, signature verification, expiration handling, and dependency relationships in auth flow",
+      "analysis_result": "**Call Graph Analysis Results:**\n\nThe authentication failure involves a chain of 4 interconnected functions:\n\n**Primary Function**: `validate_jwt_token` (auth/jwt_handler.py:45-67)\n- **Dependencies**: calls `verify_signature()`, `check_expiration()`, `decode_payload()`\n- **Call Depth**: Level 2 in authentication flow\n- **Error Handling**: Missing try-catch around `jwt.decode()`\n\n**Dependency Analysis**:\n1. **Root Function**: `authenticate_user()` → `validate_jwt_token()` → `verify_signature()`\n2. **Call Path**: login_handler → authenticate_user → validate_jwt_token → verify_signature\n3. **Issue Location**: `verify_signature()` (leaf function) lacks proper error propagation\n\n**Recommended Fixes**:\n- Add error handling in `verify_signature()` leaf function\n- Implement proper error propagation up the call chain\n- Add logging at each level for better debugging\n- Consider circuit breaker pattern for external validation calls",
+      "confidence_score": 0.93,
+      "functions_analyzed": 4,
+      "call_graph_context": {
+        "primary_function": "validate_jwt_token",
+        "dependency_count": 3,
+        "graph_depth": 3,
+        "total_functions": 4,
+        "call_paths_count": 2,
+        "relevance_score": 0.93,
+        "files_involved": ["auth/jwt_handler.py", "auth/signature_utils.py", "auth/token_utils.py"],
+        "modules_involved": ["auth.jwt_handler", "auth.signature_utils", "auth.token_utils"],
+        "has_error_handling": false,
+        "async_functions": 1
+      },
+      "services_used": {
+        "embedding": "openai",
+        "llm": "openai"
+      },
+      "context": {
+        "repo_name": "webapp-auth-service",
+        "priority": "critical",
+        "tech_stack": ["python", "flask", "jwt"]
+      }
+    },
+    {
+      "id": 2,
+      "timestamp": "2024-01-20T15:20:00.000Z",
+      "query": "Database queries are slow during user profile updates",
+      "enhanced_query": "Database query performance user profile updates: analyze query execution chain, connection management, transaction handling, and related database operations call flow",
+      "analysis_result": "**Call Graph Analysis Results:**\n\n**Primary Function**: `update_user_profile` (models/user.py:123-145)\n- **Dependencies**: 5 database-related functions in call chain\n- **Call Depth**: Level 1 (root function)\n- **Performance Issue**: Cascading N+1 query problem\n\n**Dependency Chain Analysis**:\n```\nupdate_user_profile (root)\n├── validate_profile_data()\n├── get_user_by_id() → execute_query() → get_connection()\n├── update_user_metadata() → bulk_update_query()\n└── log_profile_change() → insert_audit_log()\n```\n\n**Performance Bottlenecks Identified**:\n1. **get_connection()** called 3 times in single update\n2. **execute_query()** runs separate queries for validation, update, and logging\n3. Missing transaction boundaries across the call chain\n\n**Graph-Based Solution**:\n- Implement connection pooling at root level\n- Wrap entire call chain in single transaction\n- Batch validation and update operations\n- Add query result caching for repeated user lookups",
+      "confidence_score": 0.89,
+      "functions_analyzed": 7,
+      "call_graph_context": {
+        "primary_function": "update_user_profile",
+        "dependency_count": 6,
+        "graph_depth": 4, 
+        "total_functions": 7,
+        "call_paths_count": 3,
+        "relevance_score": 0.89,
+        "files_involved": ["models/user.py", "db/connection.py", "db/queries.py", "utils/audit.py"],
+        "modules_involved": ["models.user", "db.connection", "db.queries", "utils.audit"],
+        "has_error_handling": true,
+        "async_functions": 2
+      },
+      "services_used": {
+        "embedding": "openai", 
+        "llm": "perplexity"
+      },
+      "context": {
+        "repo_name": "user-management-api",
+        "priority": "medium",
+        "tech_stack": ["python", "sqlalchemy", "postgresql"]
+      }
+    },
+    {
+      "id": 3,
+      "timestamp": "2024-01-20T16:40:00.000Z",
+      "query": "Memory leak in async task processing",
+      "enhanced_query": "Memory leak async task processing: analyze task lifecycle, resource cleanup, async function dependencies, and memory management in task execution chains",
+      "analysis_result": "**Call Graph Analysis Results:**\n\n**Primary Function**: `process_async_task` (workers/task_processor.py:67-89)\n- **Async Dependency Chain**: 6 async functions with complex await patterns\n- **Call Depth**: Level 2 in worker hierarchy  \n- **Memory Issue**: Missing resource cleanup in exception paths\n\n**Async Call Graph**:\n```\nstart_worker() [async root]\n├── process_async_task() [async - MEMORY LEAK HERE]\n│   ├── acquire_resources() [async]\n│   ├── execute_task_logic() [async]\n│   │   └── call_external_api() [async]\n│   └── cleanup_resources() [async - NOT CALLED ON EXCEPTION]\n└── monitor_task_health() [async]\n```\n\n**Memory Leak Root Cause**:\n- **cleanup_resources()** only called in happy path\n- Exception in **execute_task_logic()** bypasses cleanup\n- **acquire_resources()** creates connection pools not released\n- Async context managers not used properly\n\n**Call Graph Based Solution**:\n- Implement async context managers for resource acquisition\n- Add finally blocks to ensure cleanup in all code paths\n- Use weak references in task dependency tracking\n- Add memory monitoring at each async function level",
+      "confidence_score": 0.91,
+      "functions_analyzed": 6,
+      "call_graph_context": {
+        "primary_function": "process_async_task",
+        "dependency_count": 5,
+        "graph_depth": 3,
+        "total_functions": 6,
+        "call_paths_count": 2,
+        "relevance_score": 0.91,
+        "files_involved": ["workers/task_processor.py", "workers/resources.py", "api/external_client.py"],
+        "modules_involved": ["workers.task_processor", "workers.resources", "api.external_client"],
+        "has_error_handling": false,
+        "async_functions": 6
+      },
+      "services_used": {
+        "embedding": "openai",
+        "llm": "openai"
+      },
+      "context": {
+        "repo_name": "async-worker-service",
+        "priority": "high",
+        "tech_stack": ["python", "asyncio", "aiohttp"]
+      }
+    }
+  ],
+  "summary_statistics": {
+    "total_functions_analyzed": 17,
+    "unique_files_involved": 10,
+    "average_call_depth": 3.3,
+    "average_confidence_score": 0.91,
+    "most_common_issues": [
+      "Missing error handling in call chains",
+      "Resource cleanup not executed in exception paths",
+      "N+1 query problems in dependency chains"
+    ],
+    "call_graph_benefits": [
+      "Identified root causes in dependency chains",
+      "Revealed cascading performance issues",
+      "Found resource cleanup gaps in async flows",
+      "Provided context-aware solutions"
+    ]
+  }
+}
